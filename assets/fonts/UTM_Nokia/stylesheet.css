@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'UTM Nokia';
+    src: url('UTMNokia.woff2') format('woff2'),
+        url('UTMNokia.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
