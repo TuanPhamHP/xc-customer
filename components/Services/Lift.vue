@@ -1,5 +1,8 @@
 <template>
-  <v-row class="white block-inputs px-2 py-2 mx-0 my-0 rounded-lg">
+  <v-row
+    :key="forceUpdateKey"
+    class="white block-inputs px-2 py-2 mx-0 my-0 rounded-lg"
+  >
     <v-col cols="6" class="each-block-input py-0 px-2">
       <div class="block-item mb-3">
         <span class="text--subtitle-1 fw-500 white-space-nowrap d-block mb-1">
@@ -19,22 +22,39 @@
     <v-row v-for="(plate, idx) in plates" :key="idx" class="mx-0 my-0 w-100">
       <v-col cols="6" class="each-block-input py-0 px-2">
         <div class="block-item mb-3">
-          <v-text-field
-            v-model="plate.origin_plate_number"
-            :label="''"
-            class="white field-set-border-app w-100 v-text-field-text--body-2 neutral_color_sub1--text field-set-border-app"
+          <input
+            :id="`cn-plate-idx-${idx}`"
+            type="text"
+            class="white input-border-app text-uppercase px-2 w-100 text--body-2 neutral_color_sub1--text"
             :class="
-              flagSubmit && !plate.origin_plate_number
-                ? 'error-border mb-1'
-                : ''
+              flagSubmit && !plate.cnPlates.length ? 'error-border mb-1' : ''
             "
-            hide-details
             placeholder="Nhập biển số xe..."
-            outlined
-            dense
-          ></v-text-field>
+            @keydown.exact.enter="onEnterKeyCn(idx)"
+          />
+          <div
+            v-if="plate.cnPlates && plate.cnPlates.length"
+            class="list-vnplate d-flex align-center flex-wrap mt-2"
+          >
+            <span
+              v-for="(pl, idxe) in plate.cnPlates"
+              :key="idxe + pl"
+              class="text--body-2 each-vnplate px-2 py-1 neutral--text"
+              >{{ pl }}
+              <v-icon
+                size="18"
+                color="semantic_error"
+                class="ml-1"
+                tabindex="-1"
+                @click="removeCnPlate(idx, pl)"
+                >mdi-close</v-icon
+              >
+            </span>
+          </div>
           <p
-            v-if="flagSubmit && !plate.origin_plate_number"
+            v-if="
+              flagSubmit && !plate.cnPlates.length && !plate.vnPlates.length
+            "
             class="semantic_error--text error-msg-small err-mod mb-0 text--overline"
           >
             Không được để trống trường này
@@ -43,12 +63,12 @@
         <!--  -->
       </v-col>
       <v-col cols="6" class="each-block-input py-0 px-2">
-        <div v-if="!plate.id" class="block-item mb-3">
+        <div class="block-item mb-3">
           <div class="d-flex align-center">
             <input
               :id="`vn-plate-idx-${idx}`"
               type="text"
-              class="white input-border-app px-2 w-100 text--body-2 neutral_color_sub1--text"
+              class="white input-border-app text-uppercase px-2 w-100 text--body-2 neutral_color_sub1--text"
               :class="
                 flagSubmit && !plate.vnPlates.length ? 'error-border' : ''
               "
@@ -83,31 +103,6 @@
                 >mdi-close</v-icon
               >
             </span>
-          </div>
-        </div>
-        <!--  -->
-        <div v-else class="block-item mb-3">
-          <div class="d-flex align-center">
-            <input
-              :id="`vn-plate-idx-${idx}`"
-              type="text"
-              class="white input-border-app px-2 w-100 text--body-2 neutral_color_sub1--text"
-              :class="
-                flagSubmit && !plate.vnPlates.length ? 'error-border' : ''
-              "
-              :value="plate.destination_plate_number"
-              readonly
-              placeholder="Nhập biển số xe..."
-            />
-            <v-btn icon :disabled="plates.length === 1">
-              <v-icon
-                color="semantic_error"
-                class="ml-1"
-                tabindex="-1"
-                @click="removePlate(idx)"
-                >mdi-delete-forever-outline</v-icon
-              >
-            </v-btn>
           </div>
         </div>
       </v-col>
@@ -211,7 +206,10 @@
       </div>
       <!--  -->
       <div class="block-item mb-3">
-        <span class="text--subtitle-1 fw-500 white-space-nowrap d-block mb-1">
+        <span
+          id="additionalChoice"
+          class="text--subtitle-1 fw-500 white-space-nowrap d-block mb-1"
+        >
           Yêu cầu bổ sung
         </span>
         <div>
@@ -248,7 +246,7 @@
           v-click-outside="closeAddOn"
           class="list-additional-choices mt-2"
         >
-          <div class="list-items white">
+          <div :style="boundStyle" class="list-items white">
             <div
               class="primary list-header py-1 px-2 text--subtitle-2 white--text d-flex align-center justify-space-between"
             >
@@ -286,6 +284,9 @@
                 rows="3"
               >
               </textarea>
+              <span v-if="addOnServices.includes(99)" class="counter-span"
+                >{{ this.otherService.length }}/{{ this.limitNote }}</span
+              >
               <p
                 v-if="
                   triggerValid &&
@@ -362,12 +363,15 @@ export default {
       vehicleType: '',
       goods_type: '',
       triggerValid: false,
+      forceUpdateKey: 0,
+      boundStyle: '',
       plates: [
         {
-          origin_plate_number: '',
-          vnPlates: []
+          vnPlates: [],
+          cnPlates: []
         }
-      ]
+      ],
+      limitNote: 50
     };
   },
   computed: {
@@ -376,8 +380,25 @@ export default {
     })
   },
   watch: {
+    otherService() {
+      if (this.otherService.length > this.limitNote) {
+        this.otherService = this.otherService.slice(0, this.limitNote);
+      }
+    },
     showListAddon() {
       this.triggerValid = false;
+      const target = document.querySelector('#additionalChoice');
+      if (target) {
+        const wHeight = window.innerHeight;
+        const viewportOffset = target.getBoundingClientRect();
+        const gap = wHeight - viewportOffset.top;
+        console.log(gap);
+        if (gap < 420) {
+          this.boundStyle = 'transform: translateY(-100%);';
+        } else {
+          this.boundStyle = '';
+        }
+      }
     },
     triggerChild() {
       this.onResolveData();
@@ -389,41 +410,26 @@ export default {
       }
     }
   },
+  mounted() {
+    this.syncDetail();
+  },
   methods: {
     syncDetail() {
+      console.log(this.detailData);
       if (!this.detailData || !this.detailData.id || !this.detailData.service) {
         return;
       }
+      this.forceUpdateKey += 1;
       const service = { ...this.detailData.service };
       this.goods_type = service.goods_type;
       this.goods_weight = service.goods_weight;
       this.vehicleType = service.truck_category;
       this.addOnServicesUpdated = service.additional_requirements || [];
-      if (service.temp_truck_pairs && service.temp_truck_pairs.length) {
-        // const listKey = [
-        //   ...new Set(service.temp_truck_pairs.map((o) => o.origin_plate_number))
-        // ];
-        // const rslt = listKey.map((o) => {
-        //   const listMatchVnPlatges = service.temp_truck_pairs.filter(
-        //     (k) => k.origin_plate_number === o
-        //   );
-        //   const obj = {
-        //     origin_plate_number: o,
-        //     listMatchPlates: listMatchVnPlatges
-        //   };
-        //   return obj;
-        // });
-        // const fkPlates = rslt.map((o) => ({
-        //   ...o,
-        //   vnPlates: o.listMatchPlates.map((k) => k.destination_plate_number)
-        // }));
-        // console.log(fkPlates);
-        //   this.plates = fkPlates;
-        this.plates = service.temp_truck_pairs.map((o) => ({
-          origin_plate_number: o.origin_plate_number,
-          destination_plate_number: o.destination_plate_number,
+      if (service.service_jobs && service.service_jobs.length) {
+        this.plates = service.service_jobs.map((o) => ({
           id: o.id,
-          vnPlates: o.destination_plate_number.split(', ')
+          vnPlates: o.destination_plate_numbers,
+          cnPlates: o.origin_plate_numbers
         }));
       }
 
@@ -476,8 +482,8 @@ export default {
     },
     addNewPlate() {
       this.plates.push({
-        origin_plate_number: '',
-        vnPlates: []
+        vnPlates: [],
+        cnPlates: []
       });
     },
     pickedDate(_dateObj) {
@@ -491,6 +497,9 @@ export default {
       this.addOnServicesUpdated.splice(idx, 1);
     },
     onEnterKey(idx) {
+      if (this.plates[idx].vnPlates.length > 9) {
+        return;
+      }
       const target = document.querySelector(`#vn-plate-idx-${idx}`);
       if (target) {
         if (!this.checkPlateRegex(target.value)) {
@@ -499,6 +508,25 @@ export default {
         const obj = { ...this.plates[idx] };
 
         obj.vnPlates.push(target.value);
+        this.plates.splice(idx, 1, obj);
+        this.$nextTick(() => {
+          target.value = '';
+        });
+      }
+    },
+    onEnterKeyCn(idx) {
+      const target = document.querySelector(`#cn-plate-idx-${idx}`);
+
+      if (target) {
+        // if (!this.checkPlateRegex(target.value)) {
+        //   return;
+        // }
+        if (!target.value.trim()) {
+          return;
+        }
+        const obj = { ...this.plates[idx] };
+
+        obj.cnPlates.push(target.value);
         this.plates.splice(idx, 1, obj);
         this.$nextTick(() => {
           target.value = '';
@@ -514,18 +542,27 @@ export default {
         target.value = '';
       }
     },
+    removeCnPlate(idx, pl) {
+      this.plates[idx].cnPlates = this.plates[idx].cnPlates.filter(
+        (o) => o !== pl
+      );
+      const target = document.querySelector(`#cn-plate-idx-${idx}`);
+      if (target) {
+        target.value = '';
+      }
+    },
     checkPlateRegex(_str) {
-      const regex = /^(\s*[a-zA-z0-9]{3}\s*-\s*[a-zA-z0-9]*)$/gi;
+      const regex = /^[a-zA-z0-9]{3}-[a-zA-z0-9]{5}$/gi;
       return _str.match(regex);
     },
     onResolveData() {
       return new Promise((resolve) => {
-        const tempTruckPairs = this.plates
-          .filter((o) => o.origin_plate_number && o.vnPlates.length)
+        const serviceJobs = this.plates
+          .filter((o) => o.cnPlates.length && o.vnPlates.length)
           .map((o) => ({
             id: o.id || 0,
-            origin_plate_number: o.origin_plate_number,
-            destination_plate_number: o.vnPlates.join(', ')
+            origin_plate_numbers: o.cnPlates,
+            destination_plate_numbers: o.vnPlates
           }));
         const obj = {
           goods_type: this.goods_type,
@@ -536,7 +573,7 @@ export default {
             (o) => o.id
           ),
           additional_requirement_note: this.otherService,
-          temp_truck_pairs: tempTruckPairs
+          service_jobs: serviceJobs
         };
         this.$emit('resolve-data', obj);
         resolve(obj);
@@ -597,5 +634,11 @@ textarea.input-border-app {
   .list-footer {
     border-radius: 0 0 4px 4px;
   }
+}
+.counter-span {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #808080;
 }
 </style>

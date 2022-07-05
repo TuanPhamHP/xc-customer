@@ -27,68 +27,68 @@
 </template>
 
 <script>
-import { splitMessages } from "@/utils"
-import { convertTimeRv, formatDateDMY } from "@/helpers/dateFormater.js"
-import MsgMix from "@/mixins/MsgMix.js"
-import MsgConvert from "@/mixins/MsgConvert.js"
-import { mapState } from "vuex"
+import { mapState } from 'vuex';
+import { splitMessages } from '@/utils';
+import { convertTimeRv, formatDateDMY } from '@/helpers/dateFormater.js';
+import MsgMix from '@/mixins/MsgMix.js';
+import MsgConvert from '@/mixins/MsgConvert.js';
 export default {
   mixins: [MsgMix, MsgConvert],
   props: {
     listPinned: {
       type: Array,
       default() {
-        return []
-      },
-    },
+        return [];
+      }
+    }
   },
   computed: {
     ...mapState({
-      userChat: (state) => state.userChat,
+      userChat: (state) => state.userChat
     }),
     listPinnedComputed() {
       const arr =
-        this.listPinned && this.listPinned.length ? [...this.listPinned] : []
-      const currentRoomCp = [...arr]
-      const result = splitMessages(currentRoomCp)
+        this.listPinned && this.listPinned.length ? [...this.listPinned] : [];
+      const currentRoomCp = [...arr];
+      const result = splitMessages(currentRoomCp);
       result.forEach((o) => {
-        o.refKey = Math.random() * 1000 + Math.random() * 1000
-        o.isMeBlock = this.isMyMsg(o)
+        o.refKey = Math.random() * 1000 + Math.random() * 1000;
+        o.isMeBlock = this.isMyMsg(o);
         o.lastTs = o.breaking_day
           ? o.breaking_day
           : o.messages && Array.isArray(o.messages)
           ? o.messages[o.messages.length - 1].ts
-          : "---"
+          : '---';
         if (o.messages) {
           o.messages.forEach((k) => {
-            k.msgType = this.checkTypeOfMsg(k)
-          })
-          if (o.messages.some((k) => k.msgType === "videoPath")) {
-            o.refKey = "1"
+            k.msgType = this.checkTypeOfMsg(k);
+          });
+          if (o.messages.some((k) => k.msgType === 'videoPath')) {
+            o.refKey = '1';
           }
         }
-      })
-      return result
+      });
+      return result;
     },
     pinnedMsg() {
-      return this.listPinnedComputed[0].messages[0]
-    },
+      return this.listPinnedComputed[0].messages[0];
+    }
   },
   methods: {
     convertTimeRv(time) {
-      return convertTimeRv(time)
+      return convertTimeRv(time);
     },
     formatDateDMY(time) {
-      return formatDateDMY(time)
+      return formatDateDMY(time);
     },
     isMyMsg(msg) {
       if (!msg || !msg.u || !this.userChat || !this.userChat.userId) {
-        return false
+        return false;
       }
-      return msg.u._id === this.userChat.userId
-    },
-  },
-}
+      return msg.u._id === this.userChat.userId;
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

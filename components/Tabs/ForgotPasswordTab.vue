@@ -68,7 +68,6 @@
         dense
         :class="loginFormErrors.password ? 'error-border' : ''"
         class="v-text-field_n_details login-input font-size-14 mb-0 input-text-fieldset-normalize"
-        @keypress.enter="handleLogin"
       >
         <template #append>
           <v-icon
@@ -111,7 +110,7 @@
         dense
         :class="loginFormErrors.password_confirmation ? 'error-border' : ''"
         class="v-text-field_n_details login-input font-size-14 mb-0 input-text-fieldset-normalize"
-        @keypress.enter="handleLogin"
+        @keypress.enter="handleResetPassword"
       >
         <template #append>
           <v-icon

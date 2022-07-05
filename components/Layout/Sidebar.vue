@@ -193,7 +193,8 @@ export default {
           pathNameMatch: [
             'services',
             'services/register',
-            'services/register/id'
+            'services/register/id',
+            'services/detail/id'
           ]
         }
         // {
@@ -268,6 +269,9 @@ export default {
 </style>
 <style lang="scss">
 .app-sidebar {
+  /* position: fixed;
+  left: 0;
+  top: 0; */
   width: 240px;
 }
 .v-navigation-drawer__border {

@@ -53,6 +53,7 @@
                 :class="
                   flagSubmit && userInfoErrors.name ? 'error-border mb-1' : ''
                 "
+                readonly
                 placeholder="Họ và tên"
               />
               <p
@@ -77,6 +78,7 @@
                 :class="
                   flagSubmit && userInfoErrors.phone ? 'error-border mb-1' : ''
                 "
+                readonly
                 placeholder="Số điện thoại"
               />
               <p
@@ -99,6 +101,7 @@
                 :class="
                   flagSubmit && userInfoErrors.email ? 'error-border mb-1' : ''
                 "
+                readonly
                 placeholder="Email"
               />
               <p
@@ -109,7 +112,7 @@
               </p>
             </div>
           </div>
-          <div class="d-flex align-center mt-8">
+          <!-- <div class="d-flex align-center mt-8">
             <v-btn
               width="120px"
               :color="'neutral_color_sub3'"
@@ -128,7 +131,7 @@
             >
               Cập nhật
             </v-btn>
-          </div>
+          </div> -->
         </div>
       </div>
     </v-card>

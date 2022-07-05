@@ -27,7 +27,7 @@
           </td>
           <td
             class="text-center text--subtitle-1 primary--text pointer hover-underline"
-            @click="$router.push(`/services/register/${order.id}`)"
+            @click="handleRedirect(order)"
           >
             {{ order.code || '---' }}
           </td>
@@ -52,15 +52,13 @@
                   v-on="on"
                 >
                   {{
-                    order.service
-                      ? order.service.temp_truck_pairs.length
-                      : '---'
+                    order.service ? order.service.service_jobs.length : '---'
                   }}
                 </p>
               </template>
 
               <div
-                v-if="order.service && order.service.temp_truck_pairs"
+                v-if="order.service && order.service.service_jobs"
                 class="license-plates-dropdown"
               >
                 <div class="inner-dropdown white">
@@ -78,19 +76,29 @@
                   </div>
                   <div class="d-body">
                     <div
-                      v-for="item in order.service.temp_truck_pairs"
+                      v-for="item in order.service.service_jobs"
                       :key="item.id"
-                      class="each-row d-flex align-center"
+                      class="each-row d-flex"
                     >
                       <div
                         class="mb-0 plate-item w-50 neutral--text text-center text--subtitle-1"
                       >
-                        {{ item.origin_plate_number }}
+                        <span
+                          v-for="(pl, idx) in item.origin_plate_numbers"
+                          :key="idx"
+                          class="span-plate px-1 rounded-lg neutral_color_sub5 mx-1 my-1"
+                          >{{ pl }}</span
+                        >
                       </div>
                       <div
                         class="mb-0 plate-item w-50 neutral--text text-center text--subtitle-1"
                       >
-                        {{ item.destination_plate_number }}
+                        <span
+                          v-for="(pl, idx) in item.destination_plate_numbers"
+                          :key="idx"
+                          class="span-plate px-1 rounded-lg neutral_color_sub5 mx-1 my-1"
+                          >{{ pl }}</span
+                        >
                       </div>
                     </div>
                   </div>
@@ -124,7 +132,7 @@
               <div class="white px-2 py-2 table-menu-actions">
                 <p
                   class="item d-flex align-center m-0 pointer text--body-1 neutral_color_sub1--text py-1 mb-1"
-                  @click="$router.push(`/services/register/${order.id}`)"
+                  @click="handleRedirect(order)"
                 >
                   <v-icon color="primary" class="mr-2">mdi-information</v-icon>
                   Chi tiết phiếu
@@ -141,6 +149,7 @@
                 <p
                   class="item d-flex align-center m-0 pointer text--body-1 neutral_color_sub1--text py-1 mb-0"
                   :class="idx % 2 ? 'disabled pointer-events-none' : ''"
+                  @click="setDataFeedback(order)"
                 >
                   <v-icon color="primary" class="mr-2"
                     >mdi-message-alert</v-icon
@@ -179,6 +188,7 @@ import TableFirstLoading from '../Loader/TableFirstLoading.vue';
 import { formatDateHMDMY } from '@/helpers/dateFormater.js';
 import objHandlerMixins from '@/mixins/objHandlerMixins.js';
 export default {
+  components: { TableFirstLoading },
   mixins: [objHandlerMixins],
   props: {
     listData: {
@@ -198,6 +208,10 @@ export default {
     setDataRemove: {
       type: Function,
       default() {}
+    },
+    setDataFeedback: {
+      type: Function,
+      default() {}
     }
   },
   computed: {
@@ -208,9 +222,15 @@ export default {
   methods: {
     formatDateHMDMY(_date) {
       return formatDateHMDMY(_date);
+    },
+    handleRedirect(order) {
+      if (order.service) {
+        this.$router.push(`/services/detail/${order.id}`);
+      } else {
+        this.$router.push(`/services/register/${order.id}`);
+      }
     }
-  },
-  components: { TableFirstLoading }
+  }
 };
 </script>
 
@@ -262,6 +282,7 @@ export default {
   .d-header {
     .plate-item {
       padding: 6px;
+
       &:nth-child(1) {
         border-right: 1px solid #d5d5d5 !important;
       }
@@ -273,6 +294,15 @@ export default {
     }
     .plate-item {
       padding: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      /* height: 100%; */
+      .span-plate {
+        height: fit-content;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        font-size: 14px;
+      }
       &:nth-child(n + 1) {
         border-right: 1px solid #d5d5d5 !important;
       }

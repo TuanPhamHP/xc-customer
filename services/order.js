@@ -39,7 +39,7 @@ const roleRepo = (axios) => {
     },
     review(id, payload = {}) {
       return axios
-        .post(`${VUE_APP_BASE_URL}/api/customer/orders/${id}/review`, payload)
+        .post(`${VUE_APP_BASE_URL}/api/customer/services/${id}/review`, payload)
         .then((res) => {
           return res;
         })

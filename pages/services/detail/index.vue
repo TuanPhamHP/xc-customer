@@ -19,9 +19,6 @@
           color="primary"
           outlined
           class="v-btn-text-normalize v-btn-outlined-primary-white text--btn px-3 mr-4"
-          :loading="loadingSubmit && !isSend"
-          :disabled="loadingSubmit && isSend"
-          @click="startProccess(false)"
         >
           Lưu nháp
         </v-btn>
@@ -29,9 +26,7 @@
           depressed
           color="primary"
           class="v-btn-text-normalize v-btn-outlined-primary-white text--btn px-3"
-          :loading="loadingSubmit && isSend"
-          :disabled="loadingSubmit && !isSend"
-          @click="startProccess(true)"
+          @click="onSubmit"
         >
           Gửi phiếu
         </v-btn>
@@ -44,7 +39,6 @@
             Mã dịch vụ <span class="semantic_error--text">*</span>
           </span>
           <v-text-field
-            :value="detailData.code"
             class="neutral_color_sub4 field-set-border-app w-100"
             hide-details=""
             placeholder="Placeholder"
@@ -126,10 +120,7 @@
                   Họ và tên<span class="semantic_error--text">*</span>
                 </span>
                 <TextFieldAutocomplete
-                  :key="detailData.id"
-                  :default-value="
-                    detailData.customer ? detailData.customer.name : '---'
-                  "
+                  :default-value="userFromAuth.name"
                   :readonly="true"
                   :text-field-class="'neutral_color_sub4 v-text-field-text--body-2 neutral_color_sub1--text field-set-border-app'"
                   :placeholder="'Họ và tên'"
@@ -145,10 +136,7 @@
                   Điện thoại<span class="semantic_error--text">*</span>
                 </span>
                 <TextFieldAutocomplete
-                  :key="detailData.id"
-                  :default-value="
-                    detailData.customer ? detailData.customer.phone : '---'
-                  "
+                  :default-value="userFromAuth.phone"
                   :readonly="true"
                   :text-field-class="'neutral_color_sub4 v-text-field-text--body-2 neutral_color_sub1--text field-set-border-app'"
                   :placeholder="'Số điện thoại'"
@@ -170,17 +158,11 @@
                   Công ty<span class="semantic_error--text">*</span>
                 </span>
                 <TextFieldAutocomplete
-                  :key="hotReload"
                   :default-value="form.company"
                   :text-field-class="'v-text-field-text--body-2'"
                   :placeholder="'Số điện thoại'"
                   :able-show-error="flagSubmit"
-                  :list-items="listLocalCompany"
-                  :item-key="'name'"
-                  :item-text="'display_name'"
-                  :select-on-focus="true"
                   :rules="['required']"
-                  @select-data="selectedCompany"
                   @change-input="(data) => (form = { ...form, company: data })"
                 />
               </div>
@@ -198,7 +180,6 @@
                   Địa chỉ
                 </span>
                 <TextFieldAutocomplete
-                  :key="hotReload"
                   :default-value="form.address"
                   :text-field-class="'v-text-field-text--body-2'"
                   :placeholder="'Địa chỉ'"
@@ -221,7 +202,6 @@
                   Mã số thuế
                 </span>
                 <TextFieldAutocomplete
-                  :key="hotReload"
                   :default-value="form.tax"
                   :text-field-class="'v-text-field-text--body-2'"
                   :placeholder="'Mã số thuế'"
@@ -244,7 +224,6 @@
                   Email
                 </span>
                 <TextFieldAutocomplete
-                  :key="hotReload"
                   :default-value="form.email"
                   :text-field-class="'v-text-field-text--body-2'"
                   :placeholder="'Mã số thuế'"
@@ -264,12 +243,7 @@
         >
           Thông tin dịch vụ
         </p>
-        <Lift
-          :flag-submit="flagSubmit"
-          :trigger-child="triggerChild"
-          :detail-data="detailData"
-          @resolve-data="onSubmit"
-        />
+        <Lift :flag-submit="flagSubmit" />
       </v-col>
     </v-row>
   </div>
@@ -279,63 +253,29 @@
 import { mapGetters, mapState } from 'vuex';
 import TextFieldAutocomplete from '@/components/Layout/TextFieldAutocomplete.vue';
 import Lift from '@/components/Services/Lift.vue';
-import api from '@/services';
 export default {
   name: 'Service-Register-Page',
-
   components: { TextFieldAutocomplete, Lift },
   data() {
     return {
       contactSearchQuery: '',
       selectedService: null,
       form: {},
-      isGetBill: 0,
-      isSend: false,
-      flagSubmit: false,
-      loadingSubmit: false,
-      loadingSend: false,
-      loadingDraft: false,
-      loadingDetail: false,
-      detailData: {},
-      listLocalCompany: [],
-      triggerChild: 0,
-      hotReload: 0
+      isGetBill: 1,
+      flagSubmit: false
     };
-  },
-  head: {
-    title: 'Chi tiết dịch vụ',
-    meta: [
-      {
-        hid: 'description',
-        name: 'description',
-        content: 'Chi tiết dịch vụ'
-      }
-    ]
   },
   computed: {
     ...mapState({
       listServices: (state) => state.listServices
     }),
     ...mapGetters({
-      userFromAuth: 'userFromAuth',
-      sysLanguage: 'sysLanguage'
+      userFromAuth: 'userFromAuth'
     })
   },
-  watch: {
-    detailData: {
-      deep: true,
-      handler() {
-        if (this.detailData.service_type) {
-          this.selectedService = this.detailData.service_type;
-        } else {
-          this.selectedService = this.listServices[0].id;
-        }
-        this.isGetBill = +this.detailData.vat_invoice;
-      }
-    }
-  },
+  watch: {},
 
-  async mounted() {
+  mounted() {
     this.$store.commit('setListCrumb', [
       {
         name: 'Trang chủ',
@@ -353,190 +293,25 @@ export default {
         link: '/services'
       }
     ]);
-    this.getDetailData();
-    const localCompanies = await this.$repositories.companies.getAll();
-    this.listLocalCompany = localCompanies;
   },
   methods: {
-    dirtyWait(ms = 100) {
+    dirtyWait(ms) {
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve(true);
         }, ms);
       });
     },
-    saveLocalCompany() {
-      const obj = {
-        id: new Date().getTime(),
-        name: this.form.company,
-        address: this.form.address,
-        tax_number: this.form.tax,
-        email: this.form.email,
-        display_name: `${this.form.company} - ${this.form.address} - ${this.form.tax} - ${this.form.email}`
-      };
-      this.$repositories.companies.add(obj);
-    },
-    async startProccess(isSend) {
-      this.isSend = isSend;
+    async onSubmit() {
       this.flagSubmit = true;
-      await this.dirtyWait(100);
+      await this.dirtyWait();
       const errCount = !!document.querySelectorAll('.error-border').length;
       if (errCount) {
         this.$store.commit(
           'toast/getError',
           'Vui lòng điền đủ thông tin trước khi tiếp tục'
         );
-        return;
       }
-      this.triggerChild += 1;
-    },
-    async onSubmit(childData) {
-      this.flagSubmit = true;
-      await this.dirtyWait(100);
-      const errCount = !!document.querySelectorAll('.error-border').length;
-      if (errCount) {
-        this.$store.commit(
-          'toast/getError',
-          'Vui lòng điền đủ thông tin trước khi tiếp tục'
-        );
-        return;
-      }
-      const formData = new FormData();
-      formData.append('vat_invoice', this.isGetBill);
-      formData.append('service_type', this.selectedService);
-      if (this.isGetBill) {
-        formData.append('temp_contact[name]', this.form.company);
-        formData.append('temp_contact[address]', this.form.address);
-        formData.append('temp_contact[tax_number]', this.form.tax);
-        formData.append('temp_contact[email]', this.form.email);
-      }
-      // child data
-      formData.append('goods_type', childData.goods_type);
-      formData.append('truck_category', childData.truck_category);
-      formData.append('goods_weight', childData.goods_weight);
-      formData.append('service_date', childData.service_date);
-      childData.additional_requirement_ids.forEach((o) => {
-        formData.append('additional_requirement_ids[]', o);
-      });
-      childData.service_jobs.forEach((o, idx) => {
-        o.origin_plate_numbers.forEach((k) => {
-          formData.append(
-            `service_jobs[${idx}][origin_plate_numbers][]`,
-            String(k).toUpperCase()
-          );
-        });
-        o.destination_plate_numbers.forEach((k) => {
-          formData.append(
-            `service_jobs[${idx}][destination_plate_numbers][]`,
-            String(k).toUpperCase()
-          );
-        });
-        if (o.id) {
-          formData.append(`service_jobs[${idx}][id]`, o.id);
-        }
-      });
-      if (childData.additional_requirement_note) {
-        formData.append(
-          'additional_requirement_note',
-          childData.additional_requirement_note
-        );
-      }
-
-      this.loadingSubmit = true;
-      const res = await api.order.update(this.$route.params.id, formData);
-
-      this.loadingSubmit = false;
-      if (!res) {
-        this.$store.commit(
-          'toast/getError',
-          this.sysLanguage.snackbar.updateOrdersFail
-        );
-        return;
-      }
-      try {
-        if (res.status && res.status >= 400) {
-          this.$store.commit(
-            'toast/getError',
-            res.data.message || res.data.error
-          );
-          return;
-        }
-        // save company on local
-        if (this.isGetBill) {
-          this.saveLocalCompany();
-        }
-        //
-        if (this.isSend) {
-          const resSend = await api.order.send(this.$route.params.id);
-          if (!resSend) {
-            this.$store.commit(
-              'toast/getError',
-              this.sysLanguage.snackbar.sendOrdersFail
-            );
-            return;
-          }
-          if (res.status && res.status >= 400) {
-            this.$store.commit(
-              'toast/getError',
-              res.data.message || res.data.error
-            );
-            return;
-          }
-          this.$store.commit(
-            'toast/getSuccess',
-            this.sysLanguage.snackbar.sendOrdersSuccess
-          );
-          this.$router.push('/services');
-        } else {
-          this.$store.commit(
-            'toast/getSuccess',
-            this.sysLanguage.snackbar.saveDraftOrdersSuccess
-          );
-          this.$router.push('/services');
-        }
-      } catch (error) {
-        this.$store.commit('toast/getError', `${error}`);
-      }
-    },
-    async getDetailData() {
-      this.loadingDetail = true;
-
-      const res = await api.order.getDetailData(this.$route.params.id);
-      this.loadingDetail = false;
-      if (!res) {
-        this.$store.commit(
-          'toast/getError',
-          this.sysLanguage.snackbar.getOrdersFail
-        );
-
-        return;
-      }
-      try {
-        if (res.status && res.status >= 400) {
-          this.$store.commit(
-            'toast/getError',
-            res.data.message || res.data.error
-          );
-          return;
-        }
-        this.detailData = res.data.data.order;
-        if (res.data.data.order.temp_contact) {
-          const tempContact = res.data.data.order.temp_contact;
-          this.form.company = tempContact.name;
-          this.form.email = tempContact.email;
-          this.form.tax = tempContact.tax_number;
-          this.form.address = tempContact.address;
-        }
-      } catch (error) {
-        this.$store.commit('toast/getError', `${error}`);
-      }
-    },
-    selectedCompany(val) {
-      this.hotReload += 1;
-      this.form.company = val.name;
-      this.form.email = val.email;
-      this.form.tax = val.tax_number;
-      this.form.address = val.address;
     }
   }
 };

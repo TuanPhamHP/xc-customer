@@ -32,6 +32,7 @@
     "saveDraftOrdersFail": "Có lỗi xảy ra khi lưu nháp dịch vụ. Liên hệ IT để được trợ giúp.",
     "initOrdersFail": "Có lỗi xảy ra khi khởi tạo dịch vụ. Liên hệ IT để được trợ giúp.",
     "registerFail": "Có lỗi xảy ra khi đăng ký tài khoản. Liên hệ IT để được trợ giúp.",
+    "reviewFail": "Có lỗi xảy ra khi đánh giá dịch vụ. Liên hệ IT để được trợ giúp.",
 
     "getRoomMsgFail": "Có lỗi xảy ra khi lấy danh sách tin nhắn. Liên hệ IT để được trợ giúp.",
     "getNewsFail": "Có lỗi xảy ra khi lấy danh sách bản tin. Liên hệ IT để được trợ giúp.",
@@ -53,6 +54,7 @@
     "createDepartmentSuccess": "Tạo mới bộ phận thành công",
     "createUserSuccess": "Tạo mới người dùng thành công",
     "registerSuccess": "Đăng ký tài khoản thành công",
+    "reviewSuccess": "Đánh giá dịch vụ đã được gửi đi",
 
     "createUserGroupFail": "Có lỗi xảy ra khi tạo mới nhóm người dùng. Liên hệ IT để được trợ giúp.",
     "createNewsFail": "Có lỗi xảy ra khi đăng bản tin. Liên hệ IT để được trợ giúp.",

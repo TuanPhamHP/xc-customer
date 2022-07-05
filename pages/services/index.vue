@@ -44,6 +44,7 @@
       <ServiceTable
         :list-data="listData"
         :set-data-remove="setDataRemove"
+        :set-data-feedback="setSelectedDataToFeedBack"
         :first-loading="firstLoading"
         :is-search="isSearch"
       />
@@ -71,6 +72,12 @@
       :confirm-btn-color="'semantic_error'"
       :raw-html="true"
     />
+
+    <DialogFeedBack
+      :is-visible="!!selectedDataToFeedBack.id"
+      :selected-data="selectedDataToFeedBack"
+      :close-dialog="onCloseFeedBack"
+    />
   </div>
 </template>
 
@@ -78,12 +85,13 @@
 import { mapGetters, mapState } from 'vuex';
 import ServiceTable from '@/components/Table/ServiceTable.vue';
 import DialogConfirm from '@/components/Dialog/DialogConfirm.vue';
+import DialogFeedBack from '@/components/Dialog/DialogFeedBack.vue';
 import Pagination from '@/components/Layout/Pagination.vue';
 import objHandlerMixins from '@/mixins/objHandlerMixins.js';
 import api from '@/services';
 export default {
   name: 'ServicesPage',
-  components: { ServiceTable, Pagination, DialogConfirm },
+  components: { ServiceTable, Pagination, DialogConfirm, DialogFeedBack },
   mixins: [objHandlerMixins],
   data() {
     return {
@@ -94,6 +102,7 @@ export default {
       loadingRemove: false,
       firstLoading: true,
       selectedDataToRemove: null,
+      selectedDataToFeedBack: {},
       listData: [],
       refIntersect: 0,
       pagination: {
@@ -189,6 +198,16 @@ export default {
     this.getListData();
   },
   methods: {
+    setSelectedDataToFeedBack(_data) {
+      if (_data) {
+        this.selectedDataToFeedBack = { ..._data };
+      } else {
+        this.selectedDataToFeedBack = _data;
+      }
+    },
+    onCloseFeedBack() {
+      this.selectedDataToFeedBack = {};
+    },
     cancelRemove() {
       this.selectedDataToRemove = null;
     },
